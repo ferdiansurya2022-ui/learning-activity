@@ -1,61 +1,83 @@
-export async function onRequestPost(context: any) {
+export async function onRequest(context: any) {
+  if (context.request.method !== "POST") {
+    return Response.json(
+      { error: "Method not allowed. Use POST." },
+      { status: 405 }
+    );
+  }
+
   try {
     const body = await context.request.json();
-
-    const { question, answer } = body;
+    const question = body.question || "";
+    const answer = body.answer || "";
+    const knowledge = body.knowledge_base || "";
 
     const prompt = `
-Kamu adalah evaluator kompetensi.
+Kamu adalah evaluator kompetensi profesional.
+Nilai jawaban peserta berdasarkan soal dan referensi.
 
-Nilai jawaban berikut dari 0 sampai 100.
-
-Pertanyaan:
+Soal:
 ${question}
 
 Jawaban peserta:
 ${answer}
 
-Berikan output JSON:
+Referensi:
+${knowledge || "Gunakan pengetahuan umum yang relevan."}
+
+Jawab HANYA JSON valid tanpa teks tambahan:
 {
-  "score": number,
-  "feedback": "penjelasan singkat"
+  "score": 0,
+  "strengths": [],
+  "weaknesses": [],
+  "errors": [],
+  "suggestions": [],
+  "feedback": ""
 }
 `;
 
-    const res = await fetch("https://ollama.sistemai.my.id/api/generate", {
+    const ollamaRes = await fetch("https://ollama.sistemai.my.id/api/generate", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "llama3:latest",
-        prompt: prompt,
-        stream: false,
-      }),
+        prompt,
+        stream: false
+      })
     });
 
-    const data = await res.json();
+    const ollamaText = await ollamaRes.text();
 
-    let result;
+    if (!ollamaRes.ok) {
+      return Response.json(
+        { error: "Ollama error", status: ollamaRes.status, body: ollamaText },
+        { status: 500 }
+      );
+    }
 
+    const ollamaData = JSON.parse(ollamaText);
+    const raw = ollamaData.response || "";
+
+    let parsed;
     try {
-      result = JSON.parse(data.response);
+      parsed = JSON.parse(raw);
     } catch {
-      result = {
+      const match = raw.match(/\{[\s\S]*\}/);
+      parsed = match ? JSON.parse(match[0]) : {
         score: 0,
-        feedback: data.response,
+        strengths: [],
+        weaknesses: [],
+        errors: ["Output AI tidak valid JSON"],
+        suggestions: ["Perbaiki prompt agar output JSON murni"],
+        feedback: raw
       };
     }
 
-    return new Response(JSON.stringify(result), {
-      headers: { "Content-Type": "application/json" },
-    });
-
+    return Response.json(parsed);
   } catch (err: any) {
-    return new Response(JSON.stringify({
-      error: err.message
-    }), {
-      status: 500,
-    });
+    return Response.json(
+      { error: err?.message || String(err) },
+      { status: 500 }
+    );
   }
 }

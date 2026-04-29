@@ -252,7 +252,7 @@ export default function ScoreParticipant() {
 <button
   onClick={async () => {
     try {
-      const res = await fetch(`${API_BASE}/grade`, {
+      const res = await fetch("http://localhost:3001/grade", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

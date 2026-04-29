@@ -211,7 +211,42 @@ export default function ScoreParticipant() {
                                         <p className="text-slate-800 whitespace-pre-wrap">{studentAns || <span className="text-slate-400 italic">Tidak dijawab</span>}</p>
                                       )}
                                     </div>
-                                    
+                                    <button
+  onClick={async () => {
+    try {
+      const res = await fetch("http://localhost:3001/grade", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          question: q.question_text,
+          answer: studentAns,
+          knowledge_base: q.correct_answer || "",
+          criteria: "Nilai berdasarkan konsep",
+          max_score: 100
+        })
+      });
+
+      const data = await res.json();
+
+      alert("Score: " + data.score + "\n" + data.feedback);
+    } catch (err) {
+      alert("Gagal menilai AI");
+    }
+  }}
+  style={{
+    marginBottom: "8px",
+    padding: "6px 12px",
+    backgroundColor: "#16a34a",
+    color: "white",
+    borderRadius: "6px",
+    border: "none",
+    cursor: "pointer"
+  }}
+>
+  Nilai dengan AI
+</button>
                                     {qFeedback?.feedback ? (
                                       <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
                                         <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider block mb-1">Feedback AI:</span>

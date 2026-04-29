@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Session } from "@/lib/types";
 import { useGetScores, useGetQuestions } from "@/lib/apps-script";
-import { PASSING_SCORE, SPREADSHEET_URL } from "@/lib/config";
+import { API_BASE, PASSING_SCORE, SPREADSHEET_URL } from "@/lib/config";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { motion } from "framer-motion";
 
 export default function ScoreParticipant() {
-  const handleManualGrading = (q: any, studentAns: string) => {
-  console.log("Manual grading:", q, studentAns);
-
-  alert("Nanti di sini kita sambungkan ke AI / backend");
-};
+  
   const { testName: testParam } = useParams();
   const testName = decodeURIComponent(testParam || "");
   
@@ -254,13 +250,34 @@ export default function ScoreParticipant() {
 </button>
                                     {/* 🔹 TOMBOL SELALU MUNCUL */}
 <button
-  onClick={() => handleManualGrading(q, studentAns)}
+  onClick={async () => {
+    try {
+      const res = await fetch(`${API_BASE}/grade`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          question: q.question_text,
+          answer: studentAns || "",
+          knowledge_base: q.correct_answer || "",
+          criteria: "Nilai berdasarkan konsep",
+          max_score: 100
+        })
+      });
+
+      const data = await res.json();
+
+      alert("Score: " + data.score + "\n\nFeedback:\n" + data.feedback);
+    } catch (err) {
+      alert("Gagal menilai AI");
+    }
+  }}
   className="mb-2 bg-green-600 text-white px-3 py-1 rounded text-sm"
 >
-  Nilai Sekarang
+  Nilai dengan AI
 </button>
 
-{/* 🔹 BARU LOGIKA FEEDBACK */}
 {qFeedback?.feedback ? (
   <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
     <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide block mb-1">
@@ -272,16 +289,9 @@ export default function ScoreParticipant() {
   </div>
 ) : (
   <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-    <span className="text-xs text-gray-500 block mb-2">
-      Belum dinilai
+    <span className="text-xs text-gray-500 block">
+      Belum dinilai AI
     </span>
-
-    <button
-      onClick={() => handleManualGrading(q, studentAns)}
-      className="bg-green-500 text-white px-3 py-1 rounded text-sm"
-    >
-      Nilai Sekarang
-    </button>
   </div>
 )}
                                   </div>

@@ -14,7 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { motion } from "framer-motion";
 
 export default function ScoreParticipant() {
-  
+  const saveScoreMutation = useSaveScore();
   const { testName: testParam } = useParams();
   const testName = decodeURIComponent(testParam || "");
   
@@ -217,31 +217,50 @@ export default function ScoreParticipant() {
                                     {/* 🔹 TOMBOL SELALU MUNCUL */}
 <button
   onClick={async () => {
-    try {
-      const res = await fetch(`${API_BASE}/grade`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          question: q.question_text,
-          answer: studentAns || "",
-          knowledge_base: q.correct_answer || "",
-          criteria: "Nilai berdasarkan konsep",
-          max_score: 100
-        })
-      });
+  try {
+    const res = await fetch(`${API_BASE}/grade`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        question: q.question_text,
+        answer: studentAns || "",
+        knowledge_base: q.correct_answer || "",
+        criteria: "Nilai berdasarkan konsep",
+        max_score: 100
+      })
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      alert("Score: " + data.score + "\n\nFeedback:\n" + data.feedback);
-    } catch (err) {
-      alert("Gagal menilai AI");
-    }
-  }}
-  className="mb-2 bg-green-600 text-white px-3 py-1 rounded text-sm"
->
-  Nilai dengan AI
+    const updatedFeedback = {
+      ...feedbackObj,
+      [q.question_index]: {
+        feedback: data.feedback,
+        score: data.score
+      }
+    };
+
+    const totalScore = Object.values(updatedFeedback).reduce((sum: any, f: any) => {
+      return sum + (f.score || 0);
+    }, 0);
+
+    await saveScoreMutation.mutateAsync({
+      username: scoreObj.username,
+      test_name: testName,
+      score: totalScore,
+      answers: answersObj,
+      feedback: updatedFeedback,
+      submitted_at: scoreObj.submitted_at
+    });
+
+    alert("Berhasil disimpan & dinilai AI!");
+
+  } catch (err) {
+    alert("Gagal menilai AI");
+  }
+}}
 </button>
 
 {qFeedback?.feedback ? (

@@ -14,6 +14,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { motion } from "framer-motion";
 
 export default function ScoreParticipant() {
+  const handleManualGrading = (q: any, studentAns: string) => {
+  console.log("Manual grading:", q, studentAns);
+
+  alert("Nanti di sini kita sambungkan ke AI / backend");
+};
   const { testName: testParam } = useParams();
   const testName = decodeURIComponent(testParam || "");
   
@@ -247,17 +252,38 @@ export default function ScoreParticipant() {
 >
   Nilai dengan AI
 </button>
-                                    {qFeedback?.feedback ? (
-                                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
-                                        <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider block mb-1">Feedback AI:</span>
-                                        <p className="text-blue-900 text-sm whitespace-pre-wrap">{qFeedback.feedback}</p>
-                                      </div>
-                                    ) : q.correct_answer && (
-                                      <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100">
-                                        <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider block mb-1">Kunci Jawaban:</span>
-                                        <p className="text-emerald-900 text-sm">{q.correct_answer}</p>
-                                      </div>
-                                    )}
+                                    {/* 🔹 TOMBOL SELALU MUNCUL */}
+<button
+  onClick={() => handleManualGrading(q, studentAns)}
+  className="mb-2 bg-green-600 text-white px-3 py-1 rounded text-sm"
+>
+  Nilai Sekarang
+</button>
+
+{/* 🔹 BARU LOGIKA FEEDBACK */}
+{qFeedback?.feedback ? (
+  <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+    <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide block mb-1">
+      Feedback AI:
+    </span>
+    <p className="text-blue-900 text-sm whitespace-pre-wrap">
+      {qFeedback.feedback}
+    </p>
+  </div>
+) : (
+  <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+    <span className="text-xs text-gray-500 block mb-2">
+      Belum dinilai
+    </span>
+
+    <button
+      onClick={() => handleManualGrading(q, studentAns)}
+      className="bg-green-500 text-white px-3 py-1 rounded text-sm"
+    >
+      Nilai Sekarang
+    </button>
+  </div>
+)}
                                   </div>
                                 </div>
                               </div>

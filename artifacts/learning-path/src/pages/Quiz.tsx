@@ -110,22 +110,16 @@ export default function Quiz() {
           feedbacks[q.question_index] = null;
         } 
         else if (isTestAiEnabled || isQuestionAiEnabled) {
-          try {
-            const res = await gradeWithAI({
-              question: q.question_text,
-              answer: studentAnswer,
-              knowledge_base: q.correct_answer || "",
-              criteria: testCriteria,
-              max_score: 100
-            });
-            gradedAnswers[q.question_index] = res.score;
-            feedbacks[q.question_index] = res;
-          } catch (e) {
-            console.error("AI grading error", e);
-            gradedAnswers[q.question_index] = studentAnswer ? 100 : 0;
-            feedbacks[q.question_index] = { feedback: "Gagal memproses penilaian AI" };
-          }
-        } 
+  gradedAnswers[q.question_index] = 0;
+
+  feedbacks[q.question_index] = {
+    feedback: "Belum dinilai AI",
+    score: 0,
+    strengths: "",
+    weaknesses: "",
+    suggestions: ""
+  };
+} 
         else {
           gradedAnswers[q.question_index] = studentAnswer ? 100 : 0;
           feedbacks[q.question_index] = { feedback: "Menunggu penilaian manual" };

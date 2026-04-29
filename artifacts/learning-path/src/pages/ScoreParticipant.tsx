@@ -4,7 +4,7 @@ import { Users, FileSpreadsheet, ChevronDown, CheckCircle2, XCircle, Download } 
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Session } from "@/lib/types";
-import { useGetScores, useGetQuestions } from "@/lib/apps-script";
+import { useGetScores, useGetQuestions, useSaveScore } from "@/lib/apps-script";
 import { API_BASE, PASSING_SCORE, SPREADSHEET_URL } from "@/lib/config";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -212,55 +212,58 @@ export default function ScoreParticipant() {
                                         <p className="text-slate-800 whitespace-pre-wrap">{studentAns || <span className="text-slate-400 italic">Tidak dijawab</span>}</p>
                                       )}
                                     </div>
-                                    <button
+                                    
   
                                     {/* 🔹 TOMBOL SELALU MUNCUL */}
 <button
   onClick={async () => {
-  try {
-    const res = await fetch(`${API_BASE}/grade`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        question: q.question_text,
-        answer: studentAns || "",
-        knowledge_base: q.correct_answer || "",
-        criteria: "Nilai berdasarkan konsep",
-        max_score: 100
-      })
-    });
+    try {
+      const res = await fetch(`${API_BASE}/grade`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          question: q.question_text,
+          answer: studentAns || "",
+          knowledge_base: q.correct_answer || "",
+          criteria: "Nilai berdasarkan konsep",
+          max_score: 100
+        })
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    const updatedFeedback = {
-      ...feedbackObj,
-      [q.question_index]: {
-        feedback: data.feedback,
-        score: data.score
-      }
-    };
+      const updatedFeedback = {
+        ...feedbackObj,
+        [q.question_index]: {
+          feedback: data.feedback,
+          score: data.score
+        }
+      };
 
-    const totalScore = Object.values(updatedFeedback).reduce((sum: any, f: any) => {
-      return sum + (f.score || 0);
-    }, 0);
+      const totalScore = Object.values(updatedFeedback).reduce((sum: any, f: any) => {
+        return sum + (f.score || 0);
+      }, 0);
 
-    await saveScoreMutation.mutateAsync({
-      username: scoreObj.username,
-      test_name: testName,
-      score: totalScore,
-      answers: answersObj,
-      feedback: updatedFeedback,
-      submitted_at: scoreObj.submitted_at
-    });
+      await saveScoreMutation.mutateAsync({
+        username: scoreObj.username,
+        test_name: testName,
+        score: totalScore,
+        answers: answersObj,
+        feedback: updatedFeedback,
+        submitted_at: scoreObj.submitted_at
+      });
 
-    alert("Berhasil disimpan & dinilai AI!");
+      alert("Berhasil disimpan & dinilai AI!");
 
-  } catch (err) {
-    alert("Gagal menilai AI");
-  }
-}}
+    } catch (err) {
+      alert("Gagal menilai AI");
+    }
+  }}
+  className="mb-2 bg-green-600 text-white px-3 py-1 rounded text-sm"
+>
+  Nilai dengan AI
 </button>
 
 {qFeedback?.feedback ? (

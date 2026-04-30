@@ -242,20 +242,25 @@ export default function ScoreParticipant() {
         }
       };
 
-      const totalScore = Object.values(updatedFeedback).reduce((sum: any, f: any) => {
-        return sum + (f.score || 0);
-      }, 0);
+      const scoredQuestions = (questions || [])
+  .map((question) => updatedFeedback[question.question_index]?.score)
+  .filter((score) => typeof score === "number");
+
+const averageScore =
+  scoredQuestions.length > 0
+    ? Math.round(scoredQuestions.reduce((sum, score) => sum + score, 0) / scoredQuestions.length)
+    : 0;
 
       await saveScoreMutation.mutateAsync({
         username: scoreObj.username,
         test_name: testName,
-        score: totalScore,
+        score: averageScore,
         answers: answersObj,
         feedback: updatedFeedback,
         submitted_at: scoreObj.submitted_at
       });
 
-      alert("Berhasil disimpan & dinilai AI!");
+      
 
     } catch (err) {
       alert("Gagal menilai AI");
